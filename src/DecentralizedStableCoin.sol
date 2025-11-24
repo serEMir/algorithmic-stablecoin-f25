@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-// This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
-
 // Layout of Contract:
 // version
 // imports
@@ -37,15 +35,28 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  *
  * This is the contract meant to be governed by DSCEngine.
  * This contract is just the ERC20 Implementation of our stablecoin system.
- *
+ * This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin.
  */
 contract DecentralizedStableCoin is ERC20Burnable, Ownable {
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
     error DecentralizedStableCoin__MustBeMoreThanZero();
     error DecentralizedStableCoin__BurnAmountExceedsBalance();
     error DecentralizedStableCoin__ZeroAddress();
 
+    /*//////////////////////////////////////////////////////////////
+                               FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     constructor() ERC20("DecentralizedStableCoin", "DSC") Ownable(msg.sender) {}
 
+    /**
+     *
+     * @param _amount the amount of token to burn
+     * @notice This function is an override of the burn() function in ERC20Burnable
+     */
     function burn(uint256 _amount) public override onlyOwner {
         uint256 balance = balanceOf(msg.sender);
         if (_amount <= 0) {
@@ -57,6 +68,11 @@ contract DecentralizedStableCoin is ERC20Burnable, Ownable {
         super.burn(_amount);
     }
 
+    /**
+     *
+     * @param _to address of recipent of the minted tokens
+     * @param _amount amount to be minted
+     */
     function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
         if (_to == address(0)) {
             revert DecentralizedStableCoin__ZeroAddress();
