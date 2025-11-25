@@ -210,7 +210,7 @@ contract DSCEngineTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
-                                BURN DSC
+                                BURN DSC TEST
     //////////////////////////////////////////////////////////////*/
 
     function testBurnDsc() public depositCollateralAndMintDsc {
@@ -229,13 +229,6 @@ contract DSCEngineTest is Test {
         vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOK.selector);
         dscEngine.liquidate(weth, USER, DEBT_TO_COVER);
     }
-
-    // function testLiquidateRevertsIfUserHealthFactorNotImproved() public depositCollateralAndMintDsc prepToLiquidate {
-    //     vm.startPrank(USER2);
-    //     vm.expectRevert(DSCEngine.DSCEngine__HealthFactorNotImproved.selector);
-    //     dscEngine.liquidate(weth, USER, DEBT_TO_COVER);
-    //     vm.stopPrank();
-    // }
 
     function testCanLiquidate() public depositCollateralAndMintDsc prepToLiquidate {
         MockV3Aggregator(ethUsdPriceFeed).updateAnswer(NEW_ETH_USD_PRICE);

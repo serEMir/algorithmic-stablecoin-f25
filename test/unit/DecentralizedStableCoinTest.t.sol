@@ -6,6 +6,7 @@ import {DSCEngine} from "../../src/DSCEngine.sol";
 import {DecentralizedStableCoin} from "../../src/DecentralizedStableCoin.sol";
 import {DeployDSC} from "../../script/DeployDSC.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DecentralizedStableCoinTest is Test {
     DeployDSC deployer;
@@ -27,12 +28,12 @@ contract DecentralizedStableCoinTest is Test {
                                TEST MINT
     //////////////////////////////////////////////////////////////*/
 
-    // function testMintRevertIFNotCalledByDSCEngine() public {
-    //     vm.prank(USER);
-    //     vm.expectRevert(abi.encodeWithSelector(DecentralizedStableCoin.OwnableUnauthorizedAccount.selcetor, USER));
-    //     dsc.mint(USER, MINT_AMOUNT);
+    function testMintRevertIFNotCalledByDSCEngine() public {
+        vm.prank(USER);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER));
+        dsc.mint(USER, MINT_AMOUNT);
 
-    // }
+    }
 
     function testMintRevertsIfAddressZero() public {
         vm.prank(address(engine));
