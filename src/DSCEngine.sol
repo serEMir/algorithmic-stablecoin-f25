@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-// This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
-
 // Layout of Contract:
 // version
 // imports
@@ -31,7 +29,7 @@ pragma solidity ^0.8.18;
  *
  * The system is designed to be as minimal as possible, and have tokens maintain a 1 token == $1 peg.
  * This stablecoin has the properties:
- * - Exogenous Collateral
+ * - Exogenous Collateral i.e collateral is not natively tied to the protocol e.g (ETH & BTC).
  * - Dollar Pegged
  * - Algorithmically Stable
  *
@@ -126,8 +124,9 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
-                           EXTERNAL FUNCTIONS
+                           PUBLIC & EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
     /**
      * @param collateralTokenAddress The address of the token to deposit as collateral.
      * @param collateralAmount The amount of collateral to deposit.
@@ -144,8 +143,23 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /**
+     * @param collateralTokenAddress The address of the collateral token to redeem
+     * @param collateralAmount The amount of collateral to redeem
+     * @param dscAmountToBurn The amount of DSC to burn
+     * @notice This function will burn DSC and redeem underlying collateral in one transaction.
+     */
+    function redeemCollateralWithDsc(address collateralTokenAddress, uint256 collateralAmount, uint256 dscAmountToBurn)
+        external
+    {
+        burnDsc(dscAmountToBurn);
+        redeemCollateral(collateralTokenAddress, collateralAmount);
+    }
+
+    /**
      * @param collateralTokenAddress The address of the token to deposit as collateral
      * @param collateralAmount The amount of collateral to deposit
+     * @notice only allowed tokens can be deposited. Make sure to check getCollateralTokens() for a list of all allowed tokens to avoid tx reversal
+     * @notice make sure to approve DSCEngine to spend collateralAmount before calling this contract.
      */
     function depositCollateral(address collateralTokenAddress, uint256 collateralAmount)
         public
@@ -161,19 +175,6 @@ contract DSCEngine is ReentrancyGuard {
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
-    }
-
-    /**
-     * @param collateralTokenAddress The address of the collateral token to redeem
-     * @param collateralAmount The amount of collateral to redeem
-     * @param dscAmountToBurn The amount of DSC to burn
-     * @notice This function will burn DSC and redeem underlying collateral in one transaction.
-     */
-    function redeemCollateralWithDsc(address collateralTokenAddress, uint256 collateralAmount, uint256 dscAmountToBurn)
-        external
-    {
-        burnDsc(dscAmountToBurn);
-        redeemCollateral(collateralTokenAddress, collateralAmount);
     }
 
     function redeemCollateral(address collateralTokenAddress, uint256 collateralAmount)
@@ -200,18 +201,23 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice make sure to approve this contract to spend the debToCover amount before calling this function.
+     */
     function burnDsc(uint256 amount) public moreThanZero(amount) {
         _burnDsc(amount, msg.sender, msg.sender);
         _revertIfHealthFactorIsBroken(msg.sender); //this will likely never get hit.
     }
 
     /**
-     * @param collateral The ERC20 address of the collateral to liquidate
+     * @param collateral The ERC20 address of the collateral to liquidate.
      * @param user The user who has broken the health factor.
      * @param debtToCover The amount of DSC you want to burn to improve the user's health factor.
      * @notice You can partially liquidate a user.
      * @notice You will get a liquidation bonus for paying off the user's debt.
      * @notice This function works under the assumption that the protocol will be roughly 200% overcollateralized at all times.
+     * @notice This fucntion was designed to priotize minimizing the protocol's losses above anything else, even above the liquidators healthFactor.
+     * @notice make sure to approve this contract to spend the debToCover amount before calling this function.
      */
     function liquidate(address collateral, address user, uint256 debtToCover)
         external
@@ -246,7 +252,7 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
-                     PRIVATE AND INTERNAL VIEW FUNCTIONS
+                     PRIVATE AND INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -272,6 +278,10 @@ contract DSCEngine is ReentrancyGuard {
             revert DSCEngine__TransferFailed();
         }
     }
+
+    /*//////////////////////////////////////////////////////////////
+                     PRIVATE AND INTERNAL VIEW FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     function _getAccountInformation(address user)
         private
