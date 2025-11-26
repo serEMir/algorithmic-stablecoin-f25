@@ -32,7 +32,6 @@ contract DecentralizedStableCoinTest is Test {
         vm.prank(USER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER));
         dsc.mint(USER, MINT_AMOUNT);
-
     }
 
     function testMintRevertsIfAddressZero() public {
